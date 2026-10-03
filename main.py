@@ -1,7 +1,7 @@
+import os
+
 import pandas as pd
 from data.train_image_enc import ImageEncoder
-# from data.train_text_enc import TextEncoder
-# from models.mlp import CombinedModelTrainer
 from data.train_text_enc import preprocess_data
 from models.mlp import define_model
 from scripts.trainer_mlp import train_model
@@ -11,6 +11,18 @@ from joblib import Parallel, delayed
 import joblib 
 
 def encode_train_data(dataset_path, image_dir):
+    """Offline feature-building step. NOT CURRENTLY RUNNABLE.
+
+    This was the path that turned raw images and report text into the
+    `Frontal_features` / `Lateral_features` / `text_features` columns. Those
+    columns are already precomputed in `dataset/iu_dataset.csv`, so training
+    reads them directly and never calls this.
+
+    It is kept for reference only. To revive it you would need to:
+      - restore the image-encoding block below (uses ImageEncoder/MobileNetV2)
+      - implement the `TextEncoder` class it refers to, which does not exist
+        anywhere in this repo
+    """
     original_dataset = pd.read_csv(dataset_path)
 
     #encoding image
@@ -54,11 +66,13 @@ def train(dataset_path,model):
 
         # Evaluate model
         test_loss, test_accuracy = model.evaluate(X_test, y_test)
-        acc = '82.435233' 
-        joblib.dump(model, 'saved_model\mlp_model.pkl') 
-        for i in range(0,10):
-            print(f'Test Loss: {test_loss}')
-            print(f'Test Accuracy: {acc}')
+
+        model_path = os.path.join('saved_model', 'mlp_model.pkl')
+        os.makedirs(os.path.dirname(model_path), exist_ok=True)
+        joblib.dump(model, model_path)
+
+        print(f'Test Loss: {test_loss}')
+        print(f'Test Accuracy: {test_accuracy}')
         
     elif model=='xgb':
         dataset_path = dataset_path
